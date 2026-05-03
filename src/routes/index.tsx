@@ -1,26 +1,107 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowDownNarrowWide, ArrowUpNarrowWide, ImageIcon } from "lucide-react";
+
+type Photo = {
+  id: string;
+  uploader_name: string;
+  file_path: string;
+  taken_at: string | null;
+  created_at: string;
+};
 
 export const Route = createFileRoute("/")({
-  component: Index,
+  component: Gallery,
+  head: () => ({ meta: [{ title: "Gallery — Family Album" }] }),
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
+const BUCKET = "family-photos";
+
+function publicUrl(path: string) {
+  return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
-function Index() {
-  return <PlaceholderIndex />;
+function Gallery() {
+  const [photos, setPhotos] = useState<Photo[] | null>(null);
+  const [sort, setSort] = useState<"newest" | "oldest">("newest");
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("photos").select("*");
+      setPhotos((data as Photo[]) ?? []);
+    })();
+  }, []);
+
+  const sorted = (photos ?? []).slice().sort((a, b) => {
+    const da = new Date(a.taken_at ?? a.created_at).getTime();
+    const db = new Date(b.taken_at ?? b.created_at).getTime();
+    return sort === "newest" ? db - da : da - db;
+  });
+
+  return (
+    <div className="space-y-8">
+      <section className="text-center py-8">
+        <h1 className="text-5xl md:text-6xl font-display font-semibold tracking-tight">
+          Our family, <span style={{ background: "var(--gradient-warm)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>in pictures</span>
+        </h1>
+        <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
+          Every photo, every memory — together in one place.
+        </p>
+      </section>
+
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2 p-1 bg-muted rounded-lg">
+          <button
+            onClick={() => setSort("newest")}
+            className={`px-4 py-2 text-sm rounded-md flex items-center gap-2 transition ${sort === "newest" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+          >
+            <ArrowDownNarrowWide className="h-4 w-4" /> Newest
+          </button>
+          <button
+            onClick={() => setSort("oldest")}
+            className={`px-4 py-2 text-sm rounded-md flex items-center gap-2 transition ${sort === "oldest" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+          >
+            <ArrowUpNarrowWide className="h-4 w-4" /> Oldest
+          </button>
+        </div>
+        <span className="text-sm text-muted-foreground">{sorted.length} photo{sorted.length === 1 ? "" : "s"}</span>
+      </div>
+
+      {photos === null ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="aspect-square rounded-xl bg-muted animate-pulse" />
+          ))}
+        </div>
+      ) : sorted.length === 0 ? (
+        <div className="text-center py-20 border-2 border-dashed rounded-2xl">
+          <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground/50" />
+          <p className="mt-4 text-muted-foreground">No photos yet.</p>
+          <Link to="/upload" className="inline-block mt-4 px-5 py-2 rounded-lg bg-primary text-primary-foreground font-medium">
+            Upload the first one
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {sorted.map((p) => (
+            <figure key={p.id} className="group relative aspect-square rounded-xl overflow-hidden bg-muted" style={{ boxShadow: "var(--shadow-soft)" }}>
+              <img
+                src={publicUrl(p.file_path)}
+                alt={`Uploaded by ${p.uploader_name}`}
+                loading="lazy"
+                className="w-full h-full object-cover transition group-hover:scale-105"
+              />
+              <figcaption className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 to-transparent text-white text-xs opacity-0 group-hover:opacity-100 transition">
+                <div className="font-medium">{p.uploader_name}</div>
+                <div className="opacity-80">
+                  {new Date(p.taken_at ?? p.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                </div>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
