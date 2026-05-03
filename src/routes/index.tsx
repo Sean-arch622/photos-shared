@@ -97,6 +97,41 @@ function Gallery() {
                 loading="lazy"
                 className="w-full h-full object-cover transition group-hover:scale-105"
               />
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    aria-label="Delete photo"
+                    className="absolute top-2 right-2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-destructive transition"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this photo?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently remove the photo uploaded by {p.uploader_name}.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={async () => {
+                        const { error: sErr } = await supabase.storage.from(BUCKET).remove([p.file_path]);
+                        const { error: dErr } = await supabase.from("photos").delete().eq("id", p.id);
+                        if (sErr || dErr) {
+                          toast.error("Failed to delete photo");
+                          return;
+                        }
+                        setPhotos((prev) => (prev ?? []).filter((x) => x.id !== p.id));
+                        toast.success("Photo deleted");
+                      }}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <figcaption className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 to-transparent text-white text-xs opacity-0 group-hover:opacity-100 transition">
                 <div className="font-medium">{p.uploader_name}</div>
                 <div className="opacity-80">
