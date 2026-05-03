@@ -1,7 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDownNarrowWide, ArrowUpNarrowWide, ImageIcon, Trash2 } from "lucide-react";
+import { ArrowDownNarrowWide, ArrowUpNarrowWide, ImageIcon, Trash2, Users } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -30,6 +34,7 @@ function publicUrl(path: string) {
 function Gallery() {
   const [photos, setPhotos] = useState<Photo[] | null>(null);
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
+  const [memberFilter, setMemberFilter] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -38,11 +43,15 @@ function Gallery() {
     })();
   }, []);
 
-  const sorted = (photos ?? []).slice().sort((a, b) => {
-    const da = new Date(a.taken_at ?? a.created_at).getTime();
-    const db = new Date(b.taken_at ?? b.created_at).getTime();
-    return sort === "newest" ? db - da : da - db;
-  });
+  const members = Array.from(new Set((photos ?? []).map((p) => p.uploader_name))).sort();
+  const sorted = (photos ?? [])
+    .filter((p) => !memberFilter || p.uploader_name === memberFilter)
+    .slice()
+    .sort((a, b) => {
+      const da = new Date(a.taken_at ?? a.created_at).getTime();
+      const db = new Date(b.taken_at ?? b.created_at).getTime();
+      return sort === "newest" ? db - da : da - db;
+    });
 
   return (
     <div className="space-y-8">
@@ -55,20 +64,53 @@ function Gallery() {
         </p>
       </section>
 
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2 p-1 bg-muted rounded-lg">
-          <button
-            onClick={() => setSort("newest")}
-            className={`px-4 py-2 text-sm rounded-md flex items-center gap-2 transition ${sort === "newest" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
-          >
-            <ArrowDownNarrowWide className="h-4 w-4" /> Newest
-          </button>
-          <button
-            onClick={() => setSort("oldest")}
-            className={`px-4 py-2 text-sm rounded-md flex items-center gap-2 transition ${sort === "oldest" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
-          >
-            <ArrowUpNarrowWide className="h-4 w-4" /> Oldest
-          </button>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 p-1 bg-muted rounded-lg">
+            <button
+              onClick={() => setSort("newest")}
+              className={`px-4 py-2 text-sm rounded-md flex items-center gap-2 transition ${sort === "newest" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+            >
+              <ArrowDownNarrowWide className="h-4 w-4" /> Newest
+            </button>
+            <button
+              onClick={() => setSort("oldest")}
+              className={`px-4 py-2 text-sm rounded-md flex items-center gap-2 transition ${sort === "oldest" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+            >
+              <ArrowUpNarrowWide className="h-4 w-4" /> Oldest
+            </button>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className={`px-4 py-2 text-sm rounded-lg flex items-center gap-2 transition border ${memberFilter ? "bg-primary text-primary-foreground border-primary" : "bg-muted border-transparent text-muted-foreground hover:text-foreground"}`}>
+                <Users className="h-4 w-4" />
+                {memberFilter ?? "Sort by member"}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuLabel>Filter by uploader</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={memberFilter === null}
+                onCheckedChange={() => setMemberFilter(null)}
+              >
+                Everyone
+              </DropdownMenuCheckboxItem>
+              {members.length === 0 ? (
+                <DropdownMenuItem disabled>No members yet</DropdownMenuItem>
+              ) : (
+                members.map((m) => (
+                  <DropdownMenuCheckboxItem
+                    key={m}
+                    checked={memberFilter === m}
+                    onCheckedChange={() => setMemberFilter(memberFilter === m ? null : m)}
+                  >
+                    {m}
+                  </DropdownMenuCheckboxItem>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <span className="text-sm text-muted-foreground">{sorted.length} photo{sorted.length === 1 ? "" : "s"}</span>
       </div>
