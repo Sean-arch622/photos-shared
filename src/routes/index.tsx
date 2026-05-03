@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDownNarrowWide, ArrowUpNarrowWide, ImageIcon, Trash2, Users } from "lucide-react";
+import { ArrowDownNarrowWide, ArrowUpNarrowWide, ImageIcon, Trash2, Users, X, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem,
@@ -35,6 +35,7 @@ function Gallery() {
   const [photos, setPhotos] = useState<Photo[] | null>(null);
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [memberFilter, setMemberFilter] = useState<string | null>(null);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -52,6 +53,53 @@ function Gallery() {
       const db = new Date(b.taken_at ?? b.created_at).getTime();
       return sort === "newest" ? db - da : da - db;
     });
+
+  const closeViewer = () => setViewerIndex(null);
+  const prev = () => setViewerIndex((i) => (i === null ? null : (i - 1 + sorted.length) % sorted.length));
+  const next = () => setViewerIndex((i) => (i === null ? null : (i + 1) % sorted.length));
+
+  useEffect(() => {
+    if (viewerIndex === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeViewer();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [viewerIndex, sorted.length]);
+
+  const handleDelete = async (p: Photo) => {
+    const { error: sErr } = await supabase.storage.from(BUCKET).remove([p.file_path]);
+    const { error: dErr } = await supabase.from("photos").delete().eq("id", p.id);
+    if (sErr || dErr) {
+      toast.error("Failed to delete photo");
+      return;
+    }
+    setPhotos((prev) => (prev ?? []).filter((x) => x.id !== p.id));
+    toast.success("Photo deleted");
+    setViewerIndex((i) => {
+      if (i === null) return null;
+      const newLen = sorted.length - 1;
+      if (newLen <= 0) return null;
+      return Math.min(i, newLen - 1);
+    });
+  };
+
+  const touchStartX = useRef<number | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) > 50) (dx < 0 ? next() : prev());
+    touchStartX.current = null;
+  };
+
+  const current = viewerIndex !== null ? sorted[viewerIndex] : null;
 
   return (
     <div className="space-y-8">
@@ -131,57 +179,100 @@ function Gallery() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {sorted.map((p) => (
-            <figure key={p.id} className="group relative aspect-square rounded-xl overflow-hidden bg-muted" style={{ boxShadow: "var(--shadow-soft)" }}>
+          {sorted.map((p, idx) => (
+            <button
+              key={p.id}
+              onClick={() => setViewerIndex(idx)}
+              className="group relative aspect-square rounded-xl overflow-hidden bg-muted text-left"
+              style={{ boxShadow: "var(--shadow-soft)" }}
+            >
               <img
                 src={publicUrl(p.file_path)}
                 alt={`Uploaded by ${p.uploader_name}`}
                 loading="lazy"
                 className="w-full h-full object-cover transition group-hover:scale-105"
               />
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <button
-                    aria-label="Delete photo"
-                    className="absolute top-2 right-2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-destructive transition"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete this photo?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently remove the photo uploaded by {p.uploader_name}.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={async () => {
-                        const { error: sErr } = await supabase.storage.from(BUCKET).remove([p.file_path]);
-                        const { error: dErr } = await supabase.from("photos").delete().eq("id", p.id);
-                        if (sErr || dErr) {
-                          toast.error("Failed to delete photo");
-                          return;
-                        }
-                        setPhotos((prev) => (prev ?? []).filter((x) => x.id !== p.id));
-                        toast.success("Photo deleted");
-                      }}
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              <figcaption className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 to-transparent text-white text-xs opacity-0 group-hover:opacity-100 transition">
+              <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 to-transparent text-white text-xs opacity-0 group-hover:opacity-100 transition">
                 <div className="font-medium">{p.uploader_name}</div>
                 <div className="opacity-80">
                   {new Date(p.taken_at ?? p.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
                 </div>
-              </figcaption>
-            </figure>
+              </div>
+            </button>
           ))}
+        </div>
+      )}
+
+      {current && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          <button
+            onClick={closeViewer}
+            aria-label="Close"
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white z-10"
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          <div className="absolute top-4 left-4 text-white text-sm z-10">
+            <div className="font-medium">{current.uploader_name}</div>
+            <div className="opacity-70 text-xs">
+              {new Date(current.taken_at ?? current.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+            </div>
+          </div>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                aria-label="Delete photo"
+                className="absolute bottom-4 right-4 p-3 rounded-full bg-destructive text-destructive-foreground hover:opacity-90 z-10"
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this photo?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently remove the photo uploaded by {current.uploader_name}.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => handleDelete(current)}>Delete</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <button
+            onClick={prev}
+            aria-label="Previous"
+            className="absolute left-2 md:left-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white z-10"
+          >
+            <ChevronLeft className="h-7 w-7" />
+          </button>
+          <button
+            onClick={next}
+            aria-label="Next"
+            className="absolute right-2 md:right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white z-10"
+          >
+            <ChevronRight className="h-7 w-7" />
+          </button>
+
+          <img
+            key={current.id}
+            src={publicUrl(current.file_path)}
+            alt={`Uploaded by ${current.uploader_name}`}
+            className="max-w-full max-h-full object-contain select-none"
+            draggable={false}
+          />
+
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-xs">
+            {(viewerIndex ?? 0) + 1} / {sorted.length}
+          </div>
         </div>
       )}
     </div>
