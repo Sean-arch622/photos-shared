@@ -207,7 +207,7 @@ function Gallery() {
 
       {current && (
         <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center animate-viewer-backdrop"
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
