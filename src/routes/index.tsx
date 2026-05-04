@@ -268,7 +268,13 @@ function Gallery() {
             key={current.id}
             src={publicUrl(current.file_path)}
             alt={`Uploaded by ${current.uploader_name}`}
-            className="max-w-full max-h-full object-contain select-none"
+            className={`max-w-full max-h-full object-contain select-none ${
+              navDir === "open"
+                ? "animate-viewer-zoom"
+                : navDir === "right"
+                ? "animate-slide-from-right"
+                : "animate-slide-from-left"
+            }`}
             draggable={false}
           />
 
