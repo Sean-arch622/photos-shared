@@ -184,7 +184,7 @@ function Gallery() {
           {sorted.map((p, idx) => (
             <button
               key={p.id}
-              onClick={() => setViewerIndex(idx)}
+              onClick={() => openViewer(idx)}
               className="group relative aspect-square rounded-xl overflow-hidden bg-muted text-left"
               style={{ boxShadow: "var(--shadow-soft)" }}
             >
