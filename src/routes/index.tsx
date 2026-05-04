@@ -36,6 +36,7 @@ function Gallery() {
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [memberFilter, setMemberFilter] = useState<string | null>(null);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const [navDir, setNavDir] = useState<"left" | "right" | "open">("open");
 
   useEffect(() => {
     (async () => {
@@ -55,8 +56,9 @@ function Gallery() {
     });
 
   const closeViewer = () => setViewerIndex(null);
-  const prev = () => setViewerIndex((i) => (i === null ? null : (i - 1 + sorted.length) % sorted.length));
-  const next = () => setViewerIndex((i) => (i === null ? null : (i + 1) % sorted.length));
+  const prev = () => { setNavDir("left"); setViewerIndex((i) => (i === null ? null : (i - 1 + sorted.length) % sorted.length)); };
+  const next = () => { setNavDir("right"); setViewerIndex((i) => (i === null ? null : (i + 1) % sorted.length)); };
+  const openViewer = (idx: number) => { setNavDir("open"); setViewerIndex(idx); };
 
   useEffect(() => {
     if (viewerIndex === null) return;
@@ -182,7 +184,7 @@ function Gallery() {
           {sorted.map((p, idx) => (
             <button
               key={p.id}
-              onClick={() => setViewerIndex(idx)}
+              onClick={() => openViewer(idx)}
               className="group relative aspect-square rounded-xl overflow-hidden bg-muted text-left"
               style={{ boxShadow: "var(--shadow-soft)" }}
             >
@@ -205,7 +207,7 @@ function Gallery() {
 
       {current && (
         <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center animate-viewer-backdrop"
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
@@ -266,7 +268,13 @@ function Gallery() {
             key={current.id}
             src={publicUrl(current.file_path)}
             alt={`Uploaded by ${current.uploader_name}`}
-            className="max-w-full max-h-full object-contain select-none"
+            className={`max-w-full max-h-full object-contain select-none ${
+              navDir === "open"
+                ? "animate-viewer-zoom"
+                : navDir === "right"
+                ? "animate-slide-from-right"
+                : "animate-slide-from-left"
+            }`}
             draggable={false}
           />
 
