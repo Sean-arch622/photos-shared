@@ -90,3 +90,24 @@
   }
   h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; }
 }
+
+@keyframes viewer-zoom-in {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes viewer-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slide-in-from-right {
+  from { opacity: 0; transform: translateX(40%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-in-from-left {
+  from { opacity: 0; transform: translateX(-40%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-viewer-zoom { animation: viewer-zoom-in 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
+.animate-viewer-backdrop { animation: viewer-backdrop-in 0.25s ease-out; }
+.animate-slide-from-right { animation: slide-in-from-right 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+.animate-slide-from-left { animation: slide-in-from-left 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
