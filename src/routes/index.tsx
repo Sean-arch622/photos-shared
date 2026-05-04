@@ -36,6 +36,7 @@ function Gallery() {
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [memberFilter, setMemberFilter] = useState<string | null>(null);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const [navDir, setNavDir] = useState<"left" | "right" | "open">("open");
 
   useEffect(() => {
     (async () => {
