@@ -56,8 +56,9 @@ function Gallery() {
     });
 
   const closeViewer = () => setViewerIndex(null);
-  const prev = () => setViewerIndex((i) => (i === null ? null : (i - 1 + sorted.length) % sorted.length));
-  const next = () => setViewerIndex((i) => (i === null ? null : (i + 1) % sorted.length));
+  const prev = () => { setNavDir("left"); setViewerIndex((i) => (i === null ? null : (i - 1 + sorted.length) % sorted.length)); };
+  const next = () => { setNavDir("right"); setViewerIndex((i) => (i === null ? null : (i + 1) % sorted.length)); };
+  const openViewer = (idx: number) => { setNavDir("open"); setViewerIndex(idx); };
 
   useEffect(() => {
     if (viewerIndex === null) return;
