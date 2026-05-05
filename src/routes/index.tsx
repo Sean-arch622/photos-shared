@@ -150,11 +150,8 @@ function Gallery() {
     <div className="space-y-8">
       <section className="text-center py-8">
         <h1 className="text-5xl md:text-6xl font-display font-semibold tracking-tight">
-          Our family, <span style={{ background: "var(--gradient-warm)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>in pictures</span>
+          <span style={{ background: "var(--gradient-warm)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Family Photos</span>
         </h1>
-        <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-          Every photo, every memory — together in one place.
-        </p>
       </section>
 
       <div className="flex items-center justify-between flex-wrap gap-3">
