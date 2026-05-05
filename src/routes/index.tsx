@@ -36,7 +36,10 @@ function Gallery() {
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [memberFilter, setMemberFilter] = useState<string | null>(null);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
-  const [navDir, setNavDir] = useState<"left" | "right" | "open">("open");
+  const [opening, setOpening] = useState(false);
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [animating, setAnimating] = useState<null | { from: number; dir: 1 | -1 }>(null);
 
   useEffect(() => {
     (async () => {
@@ -56,9 +59,34 @@ function Gallery() {
     });
 
   const closeViewer = () => setViewerIndex(null);
-  const prev = () => { setNavDir("left"); setViewerIndex((i) => (i === null ? null : (i - 1 + sorted.length) % sorted.length)); };
-  const next = () => { setNavDir("right"); setViewerIndex((i) => (i === null ? null : (i + 1) % sorted.length)); };
-  const openViewer = (idx: number) => { setNavDir("open"); setViewerIndex(idx); };
+  const animateTo = (dir: 1 | -1) => {
+    if (viewerIndex === null || sorted.length < 2) return;
+    setAnimating({ from: viewerIndex, dir });
+  };
+  const prev = () => animateTo(-1);
+  const next = () => animateTo(1);
+  const openViewer = (idx: number) => {
+    setOpening(true);
+    setViewerIndex(idx);
+    setDragX(0);
+    setAnimating(null);
+    requestAnimationFrame(() => requestAnimationFrame(() => setOpening(false)));
+  };
+
+  // When animation ends, commit the index change
+  useEffect(() => {
+    if (!animating) return;
+    const t = setTimeout(() => {
+      setViewerIndex((i) => {
+        if (i === null) return null;
+        const n = sorted.length;
+        return (i + animating.dir + n) % n;
+      });
+      setDragX(0);
+      setAnimating(null);
+    }, 320);
+    return () => clearTimeout(t);
+  }, [animating, sorted.length]);
 
   useEffect(() => {
     if (viewerIndex === null) return;
@@ -92,13 +120,28 @@ function Gallery() {
     });
   };
 
-  const touchStartX = useRef<number | null>(null);
-  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) > 50) (dx < 0 ? next() : prev());
-    touchStartX.current = null;
+  const dragStartX = useRef<number | null>(null);
+  const viewportW = useRef<number>(typeof window !== "undefined" ? window.innerWidth : 1);
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (animating) return;
+    dragStartX.current = e.clientX;
+    viewportW.current = window.innerWidth;
+    setDragging(true);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (dragStartX.current === null) return;
+    setDragX(e.clientX - dragStartX.current);
+  };
+  const onPointerUp = () => {
+    if (dragStartX.current === null) return;
+    const threshold = viewportW.current * 0.18;
+    const dx = dragX;
+    dragStartX.current = null;
+    setDragging(false);
+    if (dx <= -threshold) animateTo(1);
+    else if (dx >= threshold) animateTo(-1);
+    else setDragX(0);
   };
 
   const current = viewerIndex !== null ? sorted[viewerIndex] : null;
@@ -205,11 +248,16 @@ function Gallery() {
         </div>
       )}
 
-      {current && (
+      {current && (() => {
+        const n = sorted.length;
+        const prevPhoto = n > 1 ? sorted[(viewerIndex! - 1 + n) % n] : null;
+        const nextPhoto = n > 1 ? sorted[(viewerIndex! + 1) % n] : null;
+        const animOffsetVw = animating ? -animating.dir * 100 : 0;
+        const translate = `translate3d(calc(-100vw + ${animOffsetVw}vw + ${dragX}px), 0, 0)`;
+        const transition = dragging ? "none" : "transform 320ms cubic-bezier(0.22, 1, 0.36, 1)";
+        return (
         <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center animate-viewer-backdrop"
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center overflow-hidden animate-viewer-backdrop"
         >
           <button
             onClick={closeViewer}
@@ -264,25 +312,34 @@ function Gallery() {
             <ChevronRight className="h-7 w-7" />
           </button>
 
-          <img
-            key={current.id}
-            src={publicUrl(current.file_path)}
-            alt={`Uploaded by ${current.uploader_name}`}
-            className={`max-w-full max-h-full object-contain select-none ${
-              navDir === "open"
-                ? "animate-viewer-zoom"
-                : navDir === "right"
-                ? "animate-slide-from-right"
-                : "animate-slide-from-left"
-            }`}
-            draggable={false}
-          />
+          <div
+            className="absolute inset-0 flex items-center touch-pan-y"
+            style={{ transform: translate, transition, willChange: "transform" }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+          >
+            {[prevPhoto, current, nextPhoto].map((p, i) => (
+              <div key={i} className="w-screen h-full flex-shrink-0 flex items-center justify-center px-4">
+                {p && (
+                  <img
+                    src={publicUrl(p.file_path)}
+                    alt=""
+                    className={`max-w-full max-h-full object-contain select-none ${i === 1 && opening ? "animate-viewer-zoom" : ""}`}
+                    draggable={false}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
 
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-xs">
             {(viewerIndex ?? 0) + 1} / {sorted.length}
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
