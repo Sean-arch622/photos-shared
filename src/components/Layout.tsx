@@ -26,7 +26,7 @@ export function Layout() {
     <div className="min-h-screen bg-background">
       <header
         className="fixed left-0 right-0 z-40 px-3 sm:px-6"
-        style={{ top: "calc(env(safe-area-inset-top, 0px) + max(2.25rem, 36px))" }}
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + max(2.75rem, 44px))" }}
       >
         <div className="max-w-6xl mx-auto rounded-2xl border bg-background/75 backdrop-blur-xl px-4 sm:px-5 h-14 flex items-center justify-between shadow-[0_8px_30px_-10px_rgba(0,0,0,0.15)]">
           <Link to="/" className="flex items-center gap-2 font-display text-base sm:text-lg font-semibold">
