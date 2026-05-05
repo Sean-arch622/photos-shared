@@ -36,7 +36,10 @@ function Gallery() {
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [memberFilter, setMemberFilter] = useState<string | null>(null);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
-  const [navDir, setNavDir] = useState<"left" | "right" | "open">("open");
+  const [opening, setOpening] = useState(false);
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [animating, setAnimating] = useState<null | { from: number; dir: 1 | -1 }>(null);
 
   useEffect(() => {
     (async () => {
