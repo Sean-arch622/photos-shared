@@ -248,11 +248,16 @@ function Gallery() {
         </div>
       )}
 
-      {current && (
+      {current && (() => {
+        const n = sorted.length;
+        const prevPhoto = n > 1 ? sorted[(viewerIndex! - 1 + n) % n] : null;
+        const nextPhoto = n > 1 ? sorted[(viewerIndex! + 1) % n] : null;
+        const animOffsetVw = animating ? -animating.dir * 100 : 0;
+        const translate = `translate3d(calc(-100vw + ${animOffsetVw}vw + ${dragX}px), 0, 0)`;
+        const transition = dragging ? "none" : "transform 320ms cubic-bezier(0.22, 1, 0.36, 1)";
+        return (
         <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center animate-viewer-backdrop"
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
+          className={`fixed inset-0 z-50 bg-black/95 flex items-center justify-center overflow-hidden ${opening ? "opacity-0" : "animate-viewer-backdrop"}`}
         >
           <button
             onClick={closeViewer}
@@ -307,25 +312,34 @@ function Gallery() {
             <ChevronRight className="h-7 w-7" />
           </button>
 
-          <img
-            key={current.id}
-            src={publicUrl(current.file_path)}
-            alt={`Uploaded by ${current.uploader_name}`}
-            className={`max-w-full max-h-full object-contain select-none ${
-              navDir === "open"
-                ? "animate-viewer-zoom"
-                : navDir === "right"
-                ? "animate-slide-from-right"
-                : "animate-slide-from-left"
-            }`}
-            draggable={false}
-          />
+          <div
+            className="absolute inset-0 flex items-center touch-pan-y"
+            style={{ transform: translate, transition, willChange: "transform" }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+          >
+            {[prevPhoto, current, nextPhoto].map((p, i) => (
+              <div key={i} className="w-screen h-full flex-shrink-0 flex items-center justify-center px-4">
+                {p && (
+                  <img
+                    src={publicUrl(p.file_path)}
+                    alt=""
+                    className={`max-w-full max-h-full object-contain select-none ${i === 1 && opening ? "animate-viewer-zoom" : ""}`}
+                    draggable={false}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
 
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-xs">
             {(viewerIndex ?? 0) + 1} / {sorted.length}
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
