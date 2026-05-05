@@ -59,9 +59,34 @@ function Gallery() {
     });
 
   const closeViewer = () => setViewerIndex(null);
-  const prev = () => { setNavDir("left"); setViewerIndex((i) => (i === null ? null : (i - 1 + sorted.length) % sorted.length)); };
-  const next = () => { setNavDir("right"); setViewerIndex((i) => (i === null ? null : (i + 1) % sorted.length)); };
-  const openViewer = (idx: number) => { setNavDir("open"); setViewerIndex(idx); };
+  const animateTo = (dir: 1 | -1) => {
+    if (viewerIndex === null || sorted.length < 2) return;
+    setAnimating({ from: viewerIndex, dir });
+  };
+  const prev = () => animateTo(-1);
+  const next = () => animateTo(1);
+  const openViewer = (idx: number) => {
+    setOpening(true);
+    setViewerIndex(idx);
+    setDragX(0);
+    setAnimating(null);
+    requestAnimationFrame(() => requestAnimationFrame(() => setOpening(false)));
+  };
+
+  // When animation ends, commit the index change
+  useEffect(() => {
+    if (!animating) return;
+    const t = setTimeout(() => {
+      setViewerIndex((i) => {
+        if (i === null) return null;
+        const n = sorted.length;
+        return (i + animating.dir + n) % n;
+      });
+      setDragX(0);
+      setAnimating(null);
+    }, 320);
+    return () => clearTimeout(t);
+  }, [animating, sorted.length]);
 
   useEffect(() => {
     if (viewerIndex === null) return;
@@ -95,13 +120,28 @@ function Gallery() {
     });
   };
 
-  const touchStartX = useRef<number | null>(null);
-  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) > 50) (dx < 0 ? next() : prev());
-    touchStartX.current = null;
+  const dragStartX = useRef<number | null>(null);
+  const viewportW = useRef<number>(typeof window !== "undefined" ? window.innerWidth : 1);
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (animating) return;
+    dragStartX.current = e.clientX;
+    viewportW.current = window.innerWidth;
+    setDragging(true);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (dragStartX.current === null) return;
+    setDragX(e.clientX - dragStartX.current);
+  };
+  const onPointerUp = () => {
+    if (dragStartX.current === null) return;
+    const threshold = viewportW.current * 0.18;
+    const dx = dragX;
+    dragStartX.current = null;
+    setDragging(false);
+    if (dx <= -threshold) animateTo(1);
+    else if (dx >= threshold) animateTo(-1);
+    else setDragX(0);
   };
 
   const current = viewerIndex !== null ? sorted[viewerIndex] : null;
