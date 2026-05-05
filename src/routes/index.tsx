@@ -257,7 +257,7 @@ function Gallery() {
         const transition = dragging ? "none" : "transform 320ms cubic-bezier(0.22, 1, 0.36, 1)";
         return (
         <div
-          className={`fixed inset-0 z-50 bg-black/95 flex items-center justify-center overflow-hidden ${opening ? "opacity-0" : "animate-viewer-backdrop"}`}
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center overflow-hidden animate-viewer-backdrop"
         >
           <button
             onClick={closeViewer}
