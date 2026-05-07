@@ -11,6 +11,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 type Photo = {
   id: string;
@@ -30,6 +31,11 @@ const BUCKET = "family-photos";
 function publicUrl(path: string) {
   return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
+function thumbUrl(path: string, width = 600) {
+  return supabase.storage.from(BUCKET).getPublicUrl(path, {
+    transform: { width, height: width, resize: "cover", quality: 70 },
+  }).data.publicUrl;
+}
 
 function Gallery() {
   const [photos, setPhotos] = useState<Photo[] | null>(null);
@@ -40,6 +46,7 @@ function Gallery() {
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [animating, setAnimating] = useState<null | { from: number; dir: 1 | -1 }>(null);
+  const zoomedRef = useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -129,7 +136,7 @@ function Gallery() {
   const dragStartX = useRef<number | null>(null);
   const viewportW = useRef<number>(typeof window !== "undefined" ? window.innerWidth : 1);
   const onPointerDown = (e: React.PointerEvent) => {
-    if (animating) return;
+    if (animating || zoomedRef.current) return;
     dragStartX.current = e.clientX;
     viewportW.current = window.innerWidth;
     setDragging(true);
@@ -235,9 +242,10 @@ function Gallery() {
               style={{ boxShadow: "var(--shadow-soft)" }}
             >
               <img
-                src={publicUrl(p.file_path)}
+                src={thumbUrl(p.file_path, 600)}
                 alt={`Uploaded by ${p.uploader_name}`}
                 loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover transition group-hover:scale-105"
               />
               <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 to-transparent text-white text-xs opacity-0 group-hover:opacity-100 transition">
@@ -325,14 +333,34 @@ function Gallery() {
           >
             {[prevPhoto, current, nextPhoto].map((p, i) => (
               <div key={i} className="w-screen h-full flex-shrink-0 flex items-center justify-center px-4">
-                {p && (
+                {p && (i === 1 ? (
+                  <TransformWrapper
+                    doubleClick={{ mode: "toggle", step: 2 }}
+                    pinch={{ step: 5 }}
+                    wheel={{ step: 0.2 }}
+                    panning={{ disabled: false }}
+                    onTransform={(ref) => { zoomedRef.current = ref.state.scale > 1.01; }}
+                  >
+                    <TransformComponent
+                      wrapperStyle={{ width: "100%", height: "100%" }}
+                      contentStyle={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <img
+                        src={publicUrl(p.file_path)}
+                        alt=""
+                        className={`max-w-[100vw] max-h-[100dvh] object-contain select-none ${opening ? "animate-viewer-zoom" : ""}`}
+                        draggable={false}
+                      />
+                    </TransformComponent>
+                  </TransformWrapper>
+                ) : (
                   <img
-                    src={publicUrl(p.file_path)}
+                    src={thumbUrl(p.file_path, 1200)}
                     alt=""
-                    className={`max-w-full max-h-full object-contain select-none ${i === 1 && opening ? "animate-viewer-zoom" : ""}`}
+                    className="max-w-full max-h-full object-contain select-none"
                     draggable={false}
                   />
-                )}
+                ))}
               </div>
             ))}
           </div>
