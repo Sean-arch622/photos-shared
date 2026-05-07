@@ -46,6 +46,7 @@ function Gallery() {
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [animating, setAnimating] = useState<null | { from: number; dir: 1 | -1 }>(null);
+  const zoomedRef = useRef(false);
 
   useEffect(() => {
     (async () => {
