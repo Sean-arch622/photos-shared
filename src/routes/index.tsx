@@ -73,10 +73,13 @@ function Gallery() {
     requestAnimationFrame(() => requestAnimationFrame(() => setOpening(false)));
   };
 
-  // When animation ends, commit the index change
+  // When animation ends, commit the index change without a visible snap.
+  // We mark `dragging` true for the swap frame so the transform reset
+  // (translate back to center with the new current photo) does not animate.
   useEffect(() => {
     if (!animating) return;
     const t = setTimeout(() => {
+      setDragging(true);
       setViewerIndex((i) => {
         if (i === null) return null;
         const n = sorted.length;
@@ -84,6 +87,9 @@ function Gallery() {
       });
       setDragX(0);
       setAnimating(null);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setDragging(false));
+      });
     }, 320);
     return () => clearTimeout(t);
   }, [animating, sorted.length]);
