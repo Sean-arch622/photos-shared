@@ -136,7 +136,7 @@ function Gallery() {
   const dragStartX = useRef<number | null>(null);
   const viewportW = useRef<number>(typeof window !== "undefined" ? window.innerWidth : 1);
   const onPointerDown = (e: React.PointerEvent) => {
-    if (animating) return;
+    if (animating || zoomedRef.current) return;
     dragStartX.current = e.clientX;
     viewportW.current = window.innerWidth;
     setDragging(true);
