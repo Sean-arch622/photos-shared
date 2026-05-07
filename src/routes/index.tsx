@@ -333,14 +333,34 @@ function Gallery() {
           >
             {[prevPhoto, current, nextPhoto].map((p, i) => (
               <div key={i} className="w-screen h-full flex-shrink-0 flex items-center justify-center px-4">
-                {p && (
+                {p && (i === 1 ? (
+                  <TransformWrapper
+                    doubleClick={{ mode: "toggle", step: 2 }}
+                    pinch={{ step: 5 }}
+                    wheel={{ step: 0.2 }}
+                    panning={{ disabled: false }}
+                    onTransformed={(_, state) => { zoomedRef.current = state.scale > 1.01; }}
+                  >
+                    <TransformComponent
+                      wrapperStyle={{ width: "100%", height: "100%" }}
+                      contentStyle={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <img
+                        src={publicUrl(p.file_path)}
+                        alt=""
+                        className={`max-w-[100vw] max-h-[100dvh] object-contain select-none ${opening ? "animate-viewer-zoom" : ""}`}
+                        draggable={false}
+                      />
+                    </TransformComponent>
+                  </TransformWrapper>
+                ) : (
                   <img
-                    src={publicUrl(p.file_path)}
+                    src={thumbUrl(p.file_path, 1200)}
                     alt=""
-                    className={`max-w-full max-h-full object-contain select-none ${i === 1 && opening ? "animate-viewer-zoom" : ""}`}
+                    className="max-w-full max-h-full object-contain select-none"
                     draggable={false}
                   />
-                )}
+                ))}
               </div>
             ))}
           </div>
