@@ -339,7 +339,7 @@ function Gallery() {
                     pinch={{ step: 5 }}
                     wheel={{ step: 0.2 }}
                     panning={{ disabled: false }}
-                    onTransformed={(_, state) => { zoomedRef.current = state.scale > 1.01; }}
+                    onTransform={(ref) => { zoomedRef.current = ref.state.scale > 1.01; }}
                   >
                     <TransformComponent
                       wrapperStyle={{ width: "100%", height: "100%" }}
