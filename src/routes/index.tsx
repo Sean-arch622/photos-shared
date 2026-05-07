@@ -241,9 +241,10 @@ function Gallery() {
               style={{ boxShadow: "var(--shadow-soft)" }}
             >
               <img
-                src={publicUrl(p.file_path)}
+                src={thumbUrl(p.file_path, 600)}
                 alt={`Uploaded by ${p.uploader_name}`}
                 loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover transition group-hover:scale-105"
               />
               <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 to-transparent text-white text-xs opacity-0 group-hover:opacity-100 transition">
