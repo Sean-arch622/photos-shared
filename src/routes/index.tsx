@@ -31,6 +31,11 @@ const BUCKET = "family-photos";
 function publicUrl(path: string) {
   return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
+function thumbUrl(path: string, width = 600) {
+  return supabase.storage.from(BUCKET).getPublicUrl(path, {
+    transform: { width, height: width, resize: "cover", quality: 70 },
+  }).data.publicUrl;
+}
 
 function Gallery() {
   const [photos, setPhotos] = useState<Photo[] | null>(null);
