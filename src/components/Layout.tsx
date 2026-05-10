@@ -1,7 +1,7 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { getTheme, setTheme, getUploaderName } from "@/lib/uploader";
-import { Moon, Sun, Camera, Upload } from "lucide-react";
+import { Moon, Sun, Camera, Upload, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WelcomeModal } from "@/components/WelcomeModal";
 
@@ -38,6 +38,9 @@ export function Layout() {
           <nav className="flex items-center gap-1 sm:gap-2">
             <Link to="/" className="px-2.5 sm:px-3 py-1.5 text-sm rounded-md hover:bg-accent" activeProps={{ className: "px-2.5 sm:px-3 py-1.5 text-sm rounded-md bg-accent font-medium" }} activeOptions={{ exact: true }}>
               Gallery
+            </Link>
+            <Link to="/slideshow" className="px-2.5 sm:px-3 py-1.5 text-sm rounded-md hover:bg-accent flex items-center gap-1" activeProps={{ className: "px-2.5 sm:px-3 py-1.5 text-sm rounded-md bg-accent font-medium flex items-center gap-1" }} aria-label="Slideshow">
+              <Play className="h-4 w-4" /> <span className="hidden xs:inline">Slideshow</span>
             </Link>
             <Link to="/upload" className="px-2.5 sm:px-3 py-1.5 text-sm rounded-md hover:bg-accent flex items-center gap-1" activeProps={{ className: "px-2.5 sm:px-3 py-1.5 text-sm rounded-md bg-accent font-medium flex items-center gap-1" }}>
               <Upload className="h-4 w-4" /> <span className="hidden xs:inline">Upload</span>
