@@ -24,6 +24,12 @@ Happy Mother's Day.
 Love,
 Sean`;
 
+const EVENT = "family-photos.show-messages";
+
+export function openWelcomeMessages() {
+  window.dispatchEvent(new CustomEvent(EVENT));
+}
+
 export function WelcomeModal() {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0); // 0 intro, 1 card1, 2 card2
@@ -33,6 +39,12 @@ export function WelcomeModal() {
     try {
       if (!localStorage.getItem(KEY)) setOpen(true);
     } catch {}
+    const handler = () => {
+      setStep(1);
+      setOpen(true);
+    };
+    window.addEventListener(EVENT, handler);
+    return () => window.removeEventListener(EVENT, handler);
   }, []);
 
   useEffect(() => {

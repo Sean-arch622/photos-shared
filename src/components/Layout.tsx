@@ -1,9 +1,9 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { getTheme, setTheme, getUploaderName } from "@/lib/uploader";
-import { Moon, Sun, Camera, Upload, Play } from "lucide-react";
+import { Moon, Sun, Camera, Upload, Play, MessageSquareHeart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { WelcomeModal } from "@/components/WelcomeModal";
+import { WelcomeModal, openWelcomeMessages } from "@/components/WelcomeModal";
 
 export function Layout() {
   const [theme, setT] = useState<"light" | "dark">("light");
@@ -39,6 +39,9 @@ export function Layout() {
             <Link to="/" className="px-2.5 sm:px-3 py-1.5 text-sm rounded-md hover:bg-accent" activeProps={{ className: "px-2.5 sm:px-3 py-1.5 text-sm rounded-md bg-accent font-medium" }} activeOptions={{ exact: true }}>
               Gallery
             </Link>
+            <button onClick={openWelcomeMessages} className="px-2.5 sm:px-3 py-1.5 text-sm rounded-md hover:bg-accent flex items-center gap-1" aria-label="Messages">
+              <MessageSquareHeart className="h-4 w-4" /> <span className="hidden xs:inline">Messages</span>
+            </button>
             <Link to="/slideshow" className="px-2.5 sm:px-3 py-1.5 text-sm rounded-md hover:bg-accent flex items-center gap-1" activeProps={{ className: "px-2.5 sm:px-3 py-1.5 text-sm rounded-md bg-accent font-medium flex items-center gap-1" }} aria-label="Slideshow">
               <Play className="h-4 w-4" /> <span className="hidden xs:inline">Slideshow</span>
             </Link>
