@@ -1,9 +1,9 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { getTheme, setTheme, getUploaderName } from "@/lib/uploader";
-import { Moon, Sun, Camera, Upload, Play } from "lucide-react";
+import { Moon, Sun, Camera, Upload, Play, MessageSquareHeart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { WelcomeModal } from "@/components/WelcomeModal";
+import { WelcomeModal, openWelcomeMessages } from "@/components/WelcomeModal";
 
 export function Layout() {
   const [theme, setT] = useState<"light" | "dark">("light");
