@@ -39,6 +39,9 @@ export function Layout() {
             <Link to="/" className="px-2.5 sm:px-3 py-1.5 text-sm rounded-md hover:bg-accent" activeProps={{ className: "px-2.5 sm:px-3 py-1.5 text-sm rounded-md bg-accent font-medium" }} activeOptions={{ exact: true }}>
               Gallery
             </Link>
+            <button onClick={openWelcomeMessages} className="px-2.5 sm:px-3 py-1.5 text-sm rounded-md hover:bg-accent flex items-center gap-1" aria-label="Messages">
+              <MessageSquareHeart className="h-4 w-4" /> <span className="hidden xs:inline">Messages</span>
+            </button>
             <Link to="/slideshow" className="px-2.5 sm:px-3 py-1.5 text-sm rounded-md hover:bg-accent flex items-center gap-1" activeProps={{ className: "px-2.5 sm:px-3 py-1.5 text-sm rounded-md bg-accent font-medium flex items-center gap-1" }} aria-label="Slideshow">
               <Play className="h-4 w-4" /> <span className="hidden xs:inline">Slideshow</span>
             </Link>
