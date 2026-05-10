@@ -1,3 +1,3 @@
 [install]
-saveTextLockfile = false
+saveTextLockfile = true
 frozenLockfile = false
