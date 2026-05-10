@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { getTheme, setTheme, getUploaderName } from "@/lib/uploader";
 import { Moon, Sun, Camera, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { WelcomeModal } from "@/components/WelcomeModal";
 
 export function Layout() {
   const [theme, setT] = useState<"light" | "dark">("light");
@@ -24,6 +25,7 @@ export function Layout() {
 
   return (
     <div className="min-h-screen bg-background">
+      <WelcomeModal />
       <header
         className="fixed left-0 right-0 z-40 px-3 sm:px-6"
         style={{ top: "calc(env(safe-area-inset-top, 0px) + max(2.75rem, 44px))" }}
